@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso - Colegio Insurgentes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Colegio Insurgentes" class="logo">
+            
+            <h2>Bienvenido</h2>
+            <p class="subtitle">Sistema de Control Escolar</p>
+            
+            <form action="/login" method="POST">
+                <div class="input-group">
+                    <label for="correo">Correo Electrónico</label>
+                    <input type="email" id="correo" name="correo" placeholder="ejemplo@colegioinsurgentes.edu.mx" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" placeholder="••••••••" required>
+                </div>
+                
+                <button type="submit" class="btn-login">Iniciar Sesión</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
