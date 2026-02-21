@@ -1,15 +1,13 @@
-/* Paleta de colores basada en el logo del Colegio Insurgentes */
 :root {
-    --azul-marino: #1A3668; /* Borde exterior del escudo */
-    --azul-claro: #3D85C6;  /* Fondo interior del escudo */
-    --verde-principal: #008F39; /* Letra I y banner central */
-    --fondo-ios: #F5F5F7; /* Gris muy claro típico de Apple */
+    --azul-marino: #1A3668;
+    --azul-claro: #3D85C6;
+    --verde-principal: #008F39;
+    --fondo-ios: #F5F5F7;
     --blanco: #FFFFFF;
-    --texto-oscuro: #1D1D1F; /* Casi negro para mejor lectura */
+    --texto-oscuro: #1D1D1F;
     --texto-claro: #86868B;
 }
 
-/* Reseteo básico y tipografía estilo Apple */
 body, html {
     margin: 0;
     padding: 0;
@@ -24,19 +22,16 @@ body, html {
 
 .login-container {
     width: 100%;
-    max-width: 450px !important; /* Forzamos el ancho */
+    max-width: 450px; 
     padding: 20px;
     box-sizing: border-box;
-    /* BORRAR DESPUÉS: Solo para comprobar que el CSS se actualizó */
-    background-color: red; 
 }
 
-/* La "tarjeta" principal */
 .login-box {
     background-color: var(--blanco);
-    border-radius: 20px; /* Bordes suaves iOS */
+    border-radius: 20px;
     padding: 40px 30px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); /* Sombra difuminada y elegante */
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
     text-align: center;
 }
 
@@ -72,30 +67,27 @@ h2 {
     font-weight: 500;
     margin-bottom: 8px;
     color: var(--texto-oscuro);
-    margin-left: 4px; /* Ligero margen para alinearse visualmente con el texto del input */
+    margin-left: 4px;
 }
 
-/* Inputs minimalistas */
 .input-group input {
     width: 100%;
     padding: 14px 16px;
     font-size: 16px;
     border: 1px solid #D2D2D7;
-    border-radius: 12px; /* Redondeo interior */
+    border-radius: 12px;
     box-sizing: border-box;
     outline: none;
     background-color: #FAFAFC;
     transition: all 0.3s ease;
 }
 
-/* Efecto al hacer clic en el input */
 .input-group input:focus {
     border-color: var(--azul-claro);
     background-color: var(--blanco);
-    box-shadow: 0 0 0 4px rgba(61, 133, 198, 0.15); /* Halo azul suave */
+    box-shadow: 0 0 0 4px rgba(61, 133, 198, 0.15);
 }
 
-/* Botón principal */
 .btn-login {
     width: 100%;
     padding: 16px;
@@ -111,10 +103,9 @@ h2 {
 }
 
 .btn-login:hover {
-    background-color: #00752f; /* Verde un poco más oscuro */
+    background-color: #00752f;
 }
 
-/* Efecto al presionar el botón */
 .btn-login:active {
     transform: scale(0.97); 
 }

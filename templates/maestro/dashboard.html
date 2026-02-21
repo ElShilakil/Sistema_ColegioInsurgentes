@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Docente - Colegio Insurgentes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/maestro_style.css') }}">
+</head>
+<body>
+    <header style="display: flex; justify-content: space-between; padding: 15px 30px; background-color: #f8f9fa; border-bottom: 1px solid #ddd;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" width="30">
+            <strong style="color: #008F39;">Colegio Insurgentes | Docente</strong>
+        </div>
+        <a href="{{ url_for('login') }}" style="color: red; text-decoration: none;">Cerrar Sesión</a>
+    </header>
+
+    <main style="padding: 30px;">
+        <h1>Bienvenido, Maestro</h1>
+        <p>Selecciona un grupo para gestionar evaluaciones.</p>
+        
+        <h2>Mis Grupos Asignados</h2>
+        <ul>
+            <li><a href="#">Grupo 1° A</a></li>
+            <li><a href="#">Grupo 1° B</a></li>
+        </ul>
+    </main>
+</body>
+</html>
