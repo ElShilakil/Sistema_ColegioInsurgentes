@@ -1,13 +1,14 @@
 -- Formative Fields
 INSERT INTO cat_campos_formativos (nombre_campo) VALUES 
 ('Lenguajes'), 
-('Saberes y Pensamiento Científico'), 
-('Ética, Naturaleza y Sociedades');
+('Saberes y Pensamiento Científico'),
+('Ética, Naturaleza y Sociedades'), 
+('De lo humano y lo comunitario');
 
 -- Teachers
 INSERT INTO usuarios_maestros (nombre_completo, correo, password_hash) VALUES 
-('Roberto Gómez', 'roberto.gomez@escuela.edu', 'hash_p@ss123'),
-('Ana Martínez', 'ana.mtz@escuela.edu', 'hash_secure456');
+('Roberto Gómez', 'roberto.gomez@cinsurgentes.edu.mx', 'hash_p@ss123'),
+('Ana Martínez', 'ana.mtz@cinsurgentes.edu.mx', 'hash_secure456');
 
 -- Evaluation Periods
 INSERT INTO periodos_evaluacion (nombre_periodo, fecha_inicio, fecha_fin, ciclo_escolar) VALUES 

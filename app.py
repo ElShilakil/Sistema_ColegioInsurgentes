@@ -7,8 +7,8 @@ app = Flask(__name__)
 
 # Replace these with your actual database credentials
 DB_CONFIG = {
-    "dbname": "AlumnoControl",
-    "user": "postgres",
+    "dbname": "colegio_insurgentes",
+    "user": "DbWorker",
     "password": "1995",
     "host": "localhost",
     "port": "5432"
