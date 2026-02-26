@@ -1,102 +1,222 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
-app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-# Clave secreta necesaria para mostrar mensajes de éxito/error
-app.secret_key = 'clave_secreta_colegio_insurgentes'
 
-# --- CONFIGURACIÓN DE BASE DE DATOS (SQLite) ---
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///colegio.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+# Replace these with your actual database credentials
+DB_CONFIG = {
+    "dbname": "AlumnoControl",
+    "user": "postgres",
+    "password": "1995",
+    "host": "localhost",
+    "port": "5432"
+}
 
-# --- MODELOS DE BASE DE DATOS ---
-# Traducimos tu tabla 'alumnos' exacta a SQLAlchemy
-class Alumno(db.Model):
-    __tablename__ = 'alumnos'
-    id_alumno = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    matricula = db.Column(db.String(20), unique=True, nullable=False)
-    nombres = db.Column(db.String(100), nullable=False)
-    apellido_paterno = db.Column(db.String(100), nullable=False)
-    apellido_materno = db.Column(db.String(100))
-    curp = db.Column(db.String(18), unique=True, nullable=False)
-    fecha_nacimiento = db.Column(db.String(20))
-    genero = db.Column(db.String(1))
-    
-    # Datos del Tutor
-    nombre_tutor = db.Column(db.String(100))
-    telefono_tutor = db.Column(db.String(20))
-    email_tutor = db.Column(db.String(100))
-    
-    # id_grupo = db.Column(db.Integer) # Lo conectaremos más adelante
-    activo = db.Column(db.Boolean, default=True)
+def get_db_connection():
+    return psycopg2.connect(**DB_CONFIG)
 
+CORS(app)
 
-# --- RUTAS DE AUTENTICACIÓN ---
-@app.route('/')
-def login():
-    return render_template('login.html')
+def execute_db(query, params=(), fetch=True, commit=False):
+    """Helper function to execute database queries safely."""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute(query, params)
+        result = cur.fetchall() if fetch else None
+        if commit:
+            conn.commit()
+        return result, None
+    except Exception as e:
+        conn.rollback()
+        return None, str(e)
+    finally:
+        cur.close()
+        conn.close()
 
-@app.route('/login', methods=['POST'])
-def procesar_login():
-    correo = request.form.get('correo')
-    password = request.form.get('password')
-    
-    if correo == 'admin@colegioinsurgentes.edu.mx' and password == '123':
-        return redirect(url_for('dashboard_admin'))
-    elif correo == 'maestro@colegioinsurgentes.edu.mx' and password == '123':
-        return redirect(url_for('dashboard_maestro'))
-    else:
-        return redirect(url_for('login'))
+# ==========================================
+# ALUMNOS (Students) CRUD
+# ==========================================
 
-# --- RUTAS DEL SUPERADMIN ---
-@app.route('/admin/dashboard')
-def dashboard_admin():
-    return render_template('admin/dashboard.html')
+@app.route('/api/alumnos', methods=['GET'])
+def get_alumnos():
+    res, err = execute_db("SELECT * FROM alumnos WHERE activo = TRUE;")
+    return jsonify({"error": err} if err else res), 500 if err else 200
 
-@app.route('/admin/registrar_alumno', methods=['GET', 'POST'])
-def registrar_alumno():
-    # Si el usuario presiona el botón de guardar (POST)
-    if request.method == 'POST':
-        try:
-            nuevo_alumno = Alumno(
-                matricula=request.form.get('matricula'),
-                curp=request.form.get('curp'),
-                nombres=request.form.get('nombres'),
-                apellido_paterno=request.form.get('apellido_paterno'),
-                apellido_materno=request.form.get('apellido_materno'),
-                fecha_nacimiento=request.form.get('fecha_nacimiento'),
-                genero=request.form.get('genero'),
-                nombre_tutor=request.form.get('nombre_tutor'),
-                telefono_tutor=request.form.get('telefono_tutor'),
-                email_tutor=request.form.get('email_tutor')
-            )
-            # Guardamos en la base de datos
-            db.session.add(nuevo_alumno)
-            db.session.commit()
-            flash('¡Alumno registrado exitosamente en el sistema!')
-            return redirect(url_for('dashboard_admin'))
-            
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error al registrar: Probablemente la Matrícula o CURP ya existen.')
-            
-    # Si solo está entrando a ver la página (GET)
-    return render_template('admin/registrar_alumno.html')
+@app.route('/api/alumnos/<int:id>', methods=['GET'])
+def get_alumno(id):
+    res, err = execute_db("SELECT * FROM alumnos WHERE id_alumno = %s AND activo = TRUE;", (id,))
+    if err: return jsonify({"error": err}), 500
+    return jsonify(res[0] if res else {"message": "Not found"}), 200 if res else 404
+
+@app.route('/api/alumnos', methods=['POST'])
+def create_alumno():
+    data = request.get_json()
+    query = """
+        INSERT INTO alumnos (matricula, nombres, apellido_paterno, apellido_materno, curp, id_grupo) 
+        VALUES (%s, %s, %s, %s, %s, %s) RETURNING *;
+    """
+    params = (data['matricula'], data['nombres'], data['apellido_paterno'], data.get('apellido_materno'), data.get('curp'), data['id_grupo'])
+    res, err = execute_db(query, params, fetch=True, commit=True)
+    return jsonify({"error": err} if err else res[0]), 500 if err else 201
+
+@app.route('/api/alumnos/<int:id>', methods=['PUT'])
+def update_alumno(id):
+    data = request.get_json()
+    query = """
+        UPDATE alumnos SET nombres = %s, apellido_paterno = %s, apellido_materno = %s, id_grupo = %s 
+        WHERE id_alumno = %s RETURNING *;
+    """
+    params = (data['nombres'], data['apellido_paterno'], data.get('apellido_materno'), data['id_grupo'], id)
+    res, err = execute_db(query, params, fetch=True, commit=True)
+    return jsonify({"error": err} if err else res[0]), 500 if err else 200
+
+@app.route('/api/alumnos/<int:id>', methods=['DELETE'])
+def delete_alumno(id):
+    # Soft delete
+    res, err = execute_db("UPDATE alumnos SET activo = FALSE WHERE id_alumno = %s RETURNING id_alumno;", (id,), fetch=True, commit=True)
+    return jsonify({"error": err} if err else {"message": "Deleted successfully"}), 500 if err else 200
 
 
-# --- RUTAS DEL MAESTRO ---
-@app.route('/maestro/dashboard')
-def dashboard_maestro():
-    return render_template('maestro/dashboard.html')
+# ==========================================
+# ACTIVIDADES (Activities) CRUD
+# ==========================================
 
-@app.route('/maestro/crear_actividad')
-def crear_actividad():
-    return render_template('maestro/crear_actividad.html')
+@app.route('/api/actividades', methods=['GET'])
+def get_actividades():
+    res, err = execute_db("SELECT * FROM actividades;")
+    return jsonify({"error": err} if err else res), 500 if err else 200
+
+@app.route('/api/actividades/<int:id>', methods=['GET'])
+def get_actividad(id):
+    res, err = execute_db("SELECT * FROM actividades WHERE id_actividad = %s;", (id,))
+    if err: return jsonify({"error": err}), 500
+    return jsonify(res[0] if res else {"message": "Not found"}), 200 if res else 404
+
+@app.route('/api/actividades', methods=['POST'])
+def create_actividad():
+    data = request.get_json()
+    query = """
+        INSERT INTO actividades (titulo, descripcion, tipo_actividad, porcentaje_valor, id_periodo, id_materia, id_grupo, id_maestro)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING *;
+    """
+    params = (data['titulo'], data.get('descripcion'), data['tipo_actividad'], data['porcentaje_valor'], data['id_periodo'], data['id_materia'], data['id_grupo'], data['id_maestro'])
+    res, err = execute_db(query, params, fetch=True, commit=True)
+    return jsonify({"error": err} if err else res[0]), 500 if err else 201
+
+@app.route('/api/actividades/<int:id>', methods=['PUT'])
+def update_actividad(id):
+    data = request.get_json()
+    query = """
+        UPDATE actividades SET titulo = %s, descripcion = %s, porcentaje_valor = %s 
+        WHERE id_actividad = %s RETURNING *;
+    """
+    params = (data['titulo'], data.get('descripcion'), data['porcentaje_valor'], id)
+    res, err = execute_db(query, params, fetch=True, commit=True)
+    return jsonify({"error": err} if err else res[0]), 500 if err else 200
+
+@app.route('/api/actividades/<int:id>', methods=['DELETE'])
+def delete_actividad(id):
+    res, err = execute_db("DELETE FROM actividades WHERE id_actividad = %s RETURNING id_actividad;", (id,), fetch=True, commit=True)
+    return jsonify({"error": err} if err else {"message": "Deleted successfully"}), 500 if err else 200
+
+
+# ==========================================
+# CALIFICACIONES (Grades) CRUD
+# ==========================================
+
+@app.route('/api/calificaciones', methods=['GET'])
+def get_calificaciones():
+    res, err = execute_db("SELECT * FROM calificaciones;")
+    return jsonify({"error": err} if err else res), 500 if err else 200
+
+@app.route('/api/calificaciones/<int:id>', methods=['GET'])
+def get_calificacion(id):
+    res, err = execute_db("SELECT * FROM calificaciones WHERE id_calificacion = %s;", (id,))
+    if err: return jsonify({"error": err}), 500
+    return jsonify(res[0] if res else {"message": "Not found"}), 200 if res else 404
+
+@app.route('/api/calificaciones', methods=['POST'])
+def create_calificacion():
+    data = request.get_json()
+    query = "INSERT INTO calificaciones (id_actividad, id_alumno, calificacion, retroalimentacion) VALUES (%s, %s, %s, %s) RETURNING *;"
+    params = (data['id_actividad'], data['id_alumno'], data['calificacion'], data.get('retroalimentacion'))
+    res, err = execute_db(query, params, fetch=True, commit=True)
+    return jsonify({"error": err} if err else res[0]), 500 if err else 201
+
+@app.route('/api/calificaciones/<int:id>', methods=['PUT'])
+def update_calificacion(id):
+    data = request.get_json()
+    query = "UPDATE calificaciones SET calificacion = %s, retroalimentacion = %s WHERE id_calificacion = %s RETURNING *;"
+    params = (data['calificacion'], data.get('retroalimentacion'), id)
+    res, err = execute_db(query, params, fetch=True, commit=True)
+    return jsonify({"error": err} if err else res[0]), 500 if err else 200
+
+@app.route('/api/calificaciones/<int:id>', methods=['DELETE'])
+def delete_calificacion(id):
+    res, err = execute_db("DELETE FROM calificaciones WHERE id_calificacion = %s RETURNING id_calificacion;", (id,), fetch=True, commit=True)
+    return jsonify({"error": err} if err else {"message": "Deleted successfully"}), 500 if err else 200
+
+
+# ==========================================
+# MAESTROS (Teachers) CRUD
+# ==========================================
+
+@app.route('/api/maestros', methods=['GET'])
+def get_maestros():
+    res, err = execute_db("SELECT id_maestro, nombre_completo, correo, activo FROM usuarios_maestros WHERE activo = TRUE;")
+    return jsonify({"error": err} if err else res), 500 if err else 200
+
+@app.route('/api/maestros', methods=['POST'])
+def create_maestro():
+    data = request.get_json()
+    query = "INSERT INTO usuarios_maestros (nombre_completo, correo, password_hash) VALUES (%s, %s, %s) RETURNING id_maestro, nombre_completo, correo;"
+    res, err = execute_db(query, (data['nombre_completo'], data['correo'], data['password_hash']), fetch=True, commit=True)
+    return jsonify({"error": err} if err else res[0]), 500 if err else 201
+
+@app.route('/api/maestros/<int:id>', methods=['PUT'])
+def update_maestro(id):
+    data = request.get_json()
+    query = "UPDATE usuarios_maestros SET nombre_completo = %s, correo = %s WHERE id_maestro = %s RETURNING id_maestro, nombre_completo, correo;"
+    res, err = execute_db(query, (data['nombre_completo'], data['correo'], id), fetch=True, commit=True)
+    return jsonify({"error": err} if err else res[0]), 500 if err else 200
+
+@app.route('/api/maestros/<int:id>', methods=['DELETE'])
+def delete_maestro(id):
+    res, err = execute_db("UPDATE usuarios_maestros SET activo = FALSE WHERE id_maestro = %s RETURNING id_maestro;", (id,), fetch=True, commit=True)
+    return jsonify({"error": err} if err else {"message": "Deleted successfully"}), 500 if err else 200
+
+
+# ==========================================
+# GRUPOS (Groups) CRUD
+# ==========================================
+
+@app.route('/api/grupos', methods=['GET'])
+def get_grupos():
+    res, err = execute_db("SELECT * FROM grupos;")
+    return jsonify({"error": err} if err else res), 500 if err else 200
+
+@app.route('/api/grupos', methods=['POST'])
+def create_grupo():
+    data = request.get_json()
+    query = "INSERT INTO grupos (grado, grupo, ciclo_escolar, id_maestro_titular) VALUES (%s, %s, %s, %s) RETURNING *;"
+    res, err = execute_db(query, (data['grado'], data['grupo'], data['ciclo_escolar'], data['id_maestro_titular']), fetch=True, commit=True)
+    return jsonify({"error": err} if err else res[0]), 500 if err else 201
+
+@app.route('/api/grupos/<int:id>', methods=['PUT'])
+def update_grupo(id):
+    data = request.get_json()
+    query = "UPDATE grupos SET id_maestro_titular = %s WHERE id_grupo = %s RETURNING *;"
+    res, err = execute_db(query, (data['id_maestro_titular'], id), fetch=True, commit=True)
+    return jsonify({"error": err} if err else res[0]), 500 if err else 200
+
+@app.route('/api/grupos/<int:id>', methods=['DELETE'])
+def delete_grupo(id):
+    res, err = execute_db("DELETE FROM grupos WHERE id_grupo = %s RETURNING id_grupo;", (id,), fetch=True, commit=True)
+    return jsonify({"error": err} if err else {"message": "Deleted successfully"}), 500 if err else 200
+
 
 if __name__ == '__main__':
-    # Esto crea el archivo colegio.db y las tablas automáticamente al iniciar
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True)
+    app.run(debug=True, port=5000)

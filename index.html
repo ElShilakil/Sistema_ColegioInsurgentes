@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Escolar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+</head>
+<body class="bg-gray-100 font-sans antialiased h-screen flex overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-slate-800 text-white flex flex-col shadow-lg">
+        <div class="p-6 text-2xl font-bold border-b border-slate-700 flex items-center gap-2">
+            <i class="fa-solid fa-school"></i> AlumnoControl
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <button onclick="app.navigate('alumnos')" class="nav-btn w-full text-left px-4 py-3 rounded hover:bg-slate-700 transition flex items-center gap-3">
+                <i class="fa-solid fa-user-graduate w-5"></i> Alumnos
+            </button>
+            <button onclick="app.navigate('actividades')" class="nav-btn w-full text-left px-4 py-3 rounded hover:bg-slate-700 transition flex items-center gap-3">
+                <i class="fa-solid fa-book-open w-5"></i> Actividades
+            </button>
+            <button onclick="app.navigate('calificaciones')" class="nav-btn w-full text-left px-4 py-3 rounded hover:bg-slate-700 transition flex items-center gap-3">
+                <i class="fa-solid fa-star w-5"></i> Calificaciones
+            </button>
+            <button onclick="app.navigate('maestros')" class="nav-btn w-full text-left px-4 py-3 rounded hover:bg-slate-700 transition flex items-center gap-3">
+                <i class="fa-solid fa-chalkboard-user w-5"></i> Maestros
+            </button>
+            <button onclick="app.navigate('grupos')" class="nav-btn w-full text-left px-4 py-3 rounded hover:bg-slate-700 transition flex items-center gap-3">
+                <i class="fa-solid fa-users w-5"></i> Grupos
+            </button>
+        </nav>
+        <div class="p-4 text-xs text-slate-400 border-t border-slate-700">
+            v1.0.0 &copy; 2025
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col relative overflow-hidden">
+        <header class="bg-white shadow p-6 flex justify-between items-center z-10">
+            <h1 id="page-title" class="text-2xl font-bold text-gray-800">Dashboard</h1>
+            <button onclick="app.openModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow transition flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> Nuevo Registro
+            </button>
+        </header>
+
+        <div id="content-area" class="flex-1 overflow-auto p-8">
+            <!-- Dynamic Content will be injected here -->
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
