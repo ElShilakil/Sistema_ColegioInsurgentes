@@ -1,8 +1,8 @@
--- Database: AlumnoControl
+-- Database: colegio_insurgentes
 
--- DROP DATABASE IF EXISTS "AlumnoControl";
+-- DROP DATABASE IF EXISTS "colegio_insurgentes";
 
-CREATE DATABASE "AlumnoControl"
+CREATE DATABASE "colegio_insurgentes"
     WITH
     OWNER = postgres
     ENCODING = 'UTF8'
@@ -41,7 +41,6 @@ CREATE TABLE usuarios_maestros (
 
 -- Subjects
 CREATE TABLE materias (
-    ) (
     id_material SERIAL PRIMARY KEY,
     nombre_materia VARCHAR(150) NOT NULL,
     id_campo_relacionado INT REFERENCES cat_campos_formativos(id_campo),
